@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { format, addDays, startOfWeek, subWeeks, addWeeks, parseISO, differenceInMinutes } from 'date-fns'
-import { CalendarIcon } from 'lucide-react'
+import { CalendarIcon, Plus, Trash2 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { it } from 'date-fns/locale'
 
@@ -32,6 +32,15 @@ type Employee = {
 const MONTHS = [
   'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
   'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
+]
+
+const WEEKDAYS = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica']
+const SHIFT_TYPES = [
+  { value: 'lavorativo', label: 'Lavorativo' },
+  { value: 'permesso', label: 'Permesso' },
+  { value: 'ferie', label: 'Ferie' },
+  { value: 'malattia', label: 'Malattia' },
+  { value: 'straordinario', label: 'Straordinario' },
 ]
 
 type DetailModalProps = {
@@ -138,6 +147,15 @@ export default function EmployeesPage() {
     employeeName: ''
   })
   const [userRole, setUserRole] = useState<string>('')
+  const [weekTemplate, setWeekTemplate] = useState<any[]>([])
+  const [newTemplate, setNewTemplate] = useState({
+    weekday: 0,
+    start_time: '',
+    end_time: '',
+    type: 'lavorativo',
+    note: '',
+    template_name: 'Settimana standard'
+  })
 
   useEffect(() => {
     fetchEmployees()
@@ -183,6 +201,17 @@ export default function EmployeesPage() {
       .gte('date', format(start, 'yyyy-MM-dd'))
       .lte('date', format(end, 'yyyy-MM-dd'))
     if (!error && data) setShifts(data)
+  }
+
+  const fetchWeekTemplate = async (employeeId: string) => {
+    const { data, error } = await supabase
+      .from('employee_week_templates')
+      .select('*')
+      .eq('employee_id', employeeId)
+      .order('weekday')
+      .order('start_time')
+    if (!error && data) setWeekTemplate(data)
+    else setWeekTemplate([])
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -258,6 +287,7 @@ export default function EmployeesPage() {
       weekly_hours: employee.weekly_hours || 40
     })
     setIsDialogOpen(true)
+    fetchWeekTemplate(employee.id)
   }
 
   const handleDelete = async (id: string) => {
@@ -347,6 +377,33 @@ export default function EmployeesPage() {
       employeeId,
       employeeName
     })
+  }
+
+  const handleAddTemplateRow = async () => {
+    if (!selectedEmployee) return
+    if (!newTemplate.start_time || !newTemplate.end_time) return
+    const { error } = await supabase.from('employee_week_templates').insert([
+      {
+        ...newTemplate,
+        employee_id: selectedEmployee.id
+      }
+    ])
+    if (!error) {
+      setNewTemplate({
+        weekday: 0,
+        start_time: '',
+        end_time: '',
+        type: 'lavorativo',
+        note: '',
+        template_name: 'Settimana standard'
+      })
+      fetchWeekTemplate(selectedEmployee.id)
+    }
+  }
+
+  const handleDeleteTemplateRow = async (id: string) => {
+    const { error } = await supabase.from('employee_week_templates').delete().eq('id', id)
+    if (!error && selectedEmployee) fetchWeekTemplate(selectedEmployee.id)
   }
 
   if (isLoading) {
@@ -462,6 +519,43 @@ export default function EmployeesPage() {
                         onChange={(e) => setFormData(prev => ({ ...prev, weekly_hours: parseInt(e.target.value) }))}
                         required
                       />
+                    </div>
+                  </div>
+                  <div className="mt-6">
+                    <h3 className="font-semibold mb-2">Settimana tipo</h3>
+                    <div className="mb-2 flex flex-col gap-2">
+                      {weekTemplate.length === 0 && <div className="text-gray-500 text-sm">Nessuna fascia oraria inserita</div>}
+                      {weekTemplate.map(row => (
+                        <div key={row.id} className="grid grid-cols-6 gap-2 items-center border rounded px-2 py-1">
+                          <span className="w-full">{WEEKDAYS[row.weekday]}</span>
+                          <span className="w-full">{row.start_time.substring(0,5)} - {row.end_time.substring(0,5)}</span>
+                          <span className="w-full">{SHIFT_TYPES.find(t => t.value === row.type)?.label}</span>
+                          <span className="w-full text-xs text-gray-500 col-span-2">{row.note}</span>
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteTemplateRow(row.id)}><Trash2 size={16}/></Button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-6 gap-2 items-center mt-2">
+                      <Select value={String(newTemplate.weekday)} onValueChange={v => setNewTemplate(nt => ({...nt, weekday: Number(v)}))}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Giorno" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {WEEKDAYS.map((d, i) => <SelectItem key={i} value={String(i)}>{d}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <Input type="time" value={newTemplate.start_time} onChange={e => setNewTemplate(nt => ({...nt, start_time: e.target.value}))} />
+                      <Input type="time" value={newTemplate.end_time} onChange={e => setNewTemplate(nt => ({...nt, end_time: e.target.value}))} />
+                      <Select value={newTemplate.type} onValueChange={v => setNewTemplate(nt => ({...nt, type: v}))}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SHIFT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <Input type="text" placeholder="Note" value={newTemplate.note} onChange={e => setNewTemplate(nt => ({...nt, note: e.target.value}))} />
+                      <Button variant="outline" size="icon" onClick={handleAddTemplateRow}><Plus size={18}/></Button>
                     </div>
                   </div>
                   <div className="flex justify-between gap-2">

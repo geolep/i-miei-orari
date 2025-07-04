@@ -463,6 +463,88 @@ export default function TeamSchedule() {
     }
   };
 
+  // Funzione per copiare la settimana corrente come settimana tipo
+  const handleCopyCurrentWeekAsTemplate = async (employeeId: string) => {
+    try {
+      // Calcola le date della settimana corrente
+      const startDateStr = format(startDate, 'yyyy-MM-dd');
+      const endDateStr = format(addDays(startDate, 6), 'yyyy-MM-dd');
+      // Prendi tutti i turni della settimana corrente per il dipendente
+      const { data: shifts, error } = await supabase
+        .from('shifts')
+        .select('*')
+        .eq('employee_id', employeeId)
+        .gte('date', startDateStr)
+        .lte('date', endDateStr);
+      if (error) throw error;
+      // Cancella le fasce settimana tipo già presenti
+      await supabase
+        .from('employee_week_templates')
+        .delete()
+        .eq('employee_id', employeeId);
+      // Inserisci le nuove fasce come settimana tipo
+      if (shifts && shifts.length > 0) {
+        const weekTemplates = shifts.map(shift => ({
+          employee_id: employeeId,
+          weekday: new Date(shift.date).getDay() === 0 ? 6 : new Date(shift.date).getDay() - 1, // 0=dom, 6=sab → 0=lun
+          start_time: shift.start_time,
+          end_time: shift.end_time,
+          type: shift.type,
+          note: shift.note,
+          template_name: 'Settimana standard'
+        }));
+        const { error: insertError } = await supabase
+          .from('employee_week_templates')
+          .insert(weekTemplates);
+        if (insertError) throw insertError;
+      }
+      alert('Settimana tipo aggiornata con successo!');
+    } catch (err) {
+      console.error('Errore nel copiare la settimana come settimana tipo:', err);
+      alert('Errore nel copiare la settimana come settimana tipo.');
+    }
+  };
+
+  // Funzione per inserire la settimana tipo negli orari della settimana corrente
+  const handleInsertWeekTemplate = async (employeeId: string) => {
+    try {
+      // Prendi tutte le fasce settimana tipo del dipendente
+      const { data: templates, error } = await supabase
+        .from('employee_week_templates')
+        .select('*')
+        .eq('employee_id', employeeId);
+      if (error) throw error;
+      if (!templates || templates.length === 0) {
+        alert('Nessuna settimana tipo trovata per questo dipendente.');
+        return;
+      }
+      // Calcola la data di inizio della settimana visualizzata
+      const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+      // Prepara i nuovi turni da inserire
+      const newShifts = templates.map(t => {
+        const date = addDays(weekStart, t.weekday);
+        return {
+          employee_id: employeeId,
+          date: format(date, 'yyyy-MM-dd'),
+          start_time: t.start_time,
+          end_time: t.end_time,
+          type: t.type,
+          note: t.note,
+        };
+      });
+      // Inserisci i nuovi turni
+      const { error: insertError } = await supabase
+        .from('shifts')
+        .insert(newShifts);
+      if (insertError) throw insertError;
+      fetchShifts();
+      alert('Settimana tipo inserita negli orari!');
+    } catch (err) {
+      console.error('Errore nell\'inserimento della settimana tipo:', err);
+      alert('Errore nell\'inserimento della settimana tipo.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -755,6 +837,26 @@ export default function TeamSchedule() {
                                         onClick={() => handleDeleteWeekForEmployee(employee.id)}
                                       >
                                         Elimina settimana
+                                      </button>
+                                    )}
+                                  </Menu.Item>
+                                  <Menu.Item>
+                                    {({ active }) => (
+                                      <button
+                                        className={`$ {active ? 'bg-blue-100 text-blue-700' : ''} w-full text-left px-4 py-2 text-sm`}
+                                        onClick={() => handleCopyCurrentWeekAsTemplate(employee.id)}
+                                      >
+                                        Copia come settimana tipo
+                                      </button>
+                                    )}
+                                  </Menu.Item>
+                                  <Menu.Item>
+                                    {({ active }) => (
+                                      <button
+                                        className={`$ {active ? 'bg-green-100 text-green-700' : ''} w-full text-left px-4 py-2 text-sm`}
+                                        onClick={() => handleInsertWeekTemplate(employee.id)}
+                                      >
+                                        Inserisci la settimana tipo
                                       </button>
                                     )}
                                   </Menu.Item>
