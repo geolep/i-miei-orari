@@ -9,8 +9,9 @@ import { Database } from '@/lib/database.types'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import ShiftDialog from './ShiftDialog'
-import { Stethoscope, Palmtree, Clock, LucideIcon, Zap, GripVertical } from 'lucide-react'
+import { Stethoscope, Palmtree, Clock, LucideIcon, Zap, GripVertical, MoreVertical } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog'
+import { Menu, Transition } from '@headlessui/react'
 
 type Employee = Database['public']['Tables']['employees']['Row'] & {
   weekly_hours?: number;
@@ -42,6 +43,14 @@ interface PredefinedShift {
   start_time: string;
   end_time: string;
   type: ShiftType;
+}
+
+// Funzione per determinare il colore di background per i turni lavorativi mattina/pomeriggio
+function getLavorativoBg(start_time: string) {
+  if (!start_time) return 'bg-green-100';
+  const [h, m] = start_time.split(':').map(Number);
+  if (h > 15 || (h === 15 && m > 0)) return 'bg-green-300';
+  return 'bg-green-100';
 }
 
 export default function TeamSchedule() {
@@ -234,7 +243,6 @@ export default function TeamSchedule() {
 
   const handleQuickDeleteShift = async (shiftId: string, e: React.MouseEvent) => {
     e.stopPropagation() // Previene l'apertura del dialog di modifica
-    if (confirm('Sei sicuro di voler eliminare questo turno?')) {
       try {
         const { error } = await supabase
           .from('shifts')
@@ -246,7 +254,7 @@ export default function TeamSchedule() {
       } catch (error) {
         console.error('Errore nell\'eliminazione del turno:', error)
       }
-    }
+    
   }
 
   const handleDrop = async (e: React.DragEvent, employeeId: string, date: Date) => {
@@ -354,6 +362,107 @@ export default function TeamSchedule() {
     }
   }
 
+  // Funzione per copiare gli orari della settimana precedente
+  const handleCopyPreviousWeek = async () => {
+    if (!confirm('Vuoi copiare tutti gli orari della settimana precedente in questa settimana? Gli orari esistenti verranno mantenuti.')) return;
+    try {
+      const prevStartDate = format(addDays(startDate, -7), 'yyyy-MM-dd');
+      const prevEndDate = format(addDays(startDate, -1), 'yyyy-MM-dd');
+      const currStartDate = format(startDate, 'yyyy-MM-dd');
+      const currEndDate = format(addDays(startDate, 6), 'yyyy-MM-dd');
+
+      // Prendi tutti i turni della settimana precedente
+      const { data: prevShifts, error } = await supabase
+        .from('shifts')
+        .select('*')
+        .gte('date', prevStartDate)
+        .lte('date', prevEndDate);
+      if (error) throw error;
+      if (!prevShifts || prevShifts.length === 0) {
+        alert('Nessun orario trovato nella settimana precedente.');
+        return;
+      }
+      // Calcola la differenza di giorni tra la settimana precedente e quella attuale
+      const dayDiff = 7;
+      // Prepara i nuovi turni da inserire
+      const newShifts = prevShifts.map(shift => ({
+        employee_id: shift.employee_id,
+        date: format(addDays(new Date(shift.date), dayDiff), 'yyyy-MM-dd'),
+        start_time: shift.start_time,
+        end_time: shift.end_time,
+        type: shift.type,
+        note: shift.note,
+      }));
+      // Inserisci i nuovi turni
+      const { error: insertError } = await supabase
+        .from('shifts')
+        .insert(newShifts);
+      if (insertError) throw insertError;
+      fetchShifts();
+      alert('Orari copiati con successo!');
+    } catch (err) {
+      console.error('Errore nella copia degli orari:', err);
+      alert('Errore nella copia degli orari.');
+    }
+  };
+
+  // Copia solo i turni della settimana precedente per un singolo dipendente
+  const handleCopyPreviousWeekForEmployee = async (employeeId: string) => {
+    try {
+      const prevStartDate = format(addDays(startDate, -7), 'yyyy-MM-dd');
+      const prevEndDate = format(addDays(startDate, -1), 'yyyy-MM-dd');
+      // Prendi solo i turni della settimana precedente per il dipendente
+      const { data: prevShifts, error } = await supabase
+        .from('shifts')
+        .select('*')
+        .eq('employee_id', employeeId)
+        .gte('date', prevStartDate)
+        .lte('date', prevEndDate);
+      if (error) throw error;
+      if (!prevShifts || prevShifts.length === 0) {
+        alert('Nessun orario trovato nella settimana precedente per questo dipendente.');
+        return;
+      }
+      const dayDiff = 7;
+      const newShifts = prevShifts.map(shift => ({
+        employee_id: shift.employee_id,
+        date: format(addDays(new Date(shift.date), dayDiff), 'yyyy-MM-dd'),
+        start_time: shift.start_time,
+        end_time: shift.end_time,
+        type: shift.type,
+        note: shift.note,
+      }));
+      const { error: insertError } = await supabase
+        .from('shifts')
+        .insert(newShifts);
+      if (insertError) throw insertError;
+      fetchShifts();
+    } catch (err) {
+      console.error('Errore nella copia degli orari per dipendente:', err);
+      alert('Errore nella copia degli orari per dipendente.');
+    }
+  };
+
+  // Elimina tutti i turni della settimana corrente per un singolo dipendente
+  const handleDeleteWeekForEmployee = async (employeeId: string) => {
+    if (!confirm('Vuoi eliminare tutti i turni di questa settimana per questo dipendente?')) return;
+    try {
+      const startDateStr = format(startDate, 'yyyy-MM-dd');
+      const endDateStr = format(addDays(startDate, 6), 'yyyy-MM-dd');
+      const { error } = await supabase
+        .from('shifts')
+        .delete()
+        .eq('employee_id', employeeId)
+        .gte('date', startDateStr)
+        .lte('date', endDateStr);
+      if (error) throw error;
+      fetchShifts();
+    } catch (err) {
+      console.error('Errore nell\'eliminazione dei turni della settimana per dipendente:', err);
+      alert('Errore nell\'eliminazione dei turni della settimana per dipendente.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -400,9 +509,14 @@ export default function TeamSchedule() {
                 Settimana del {format(startDate, 'd MMMM yyyy', { locale: it })}
               </span>
               {userRole !== 'employee' && (
-                <Button variant="destructive" onClick={handleDeleteAllSchedule}>
-                  Elimina Tutti gli Orari
-                </Button>
+                <>
+                  <Button variant="destructive" onClick={handleDeleteAllSchedule}>
+                    Elimina Tutti gli Orari
+                  </Button>
+                  <Button variant="secondary" onClick={handleCopyPreviousWeek}>
+                    Copia Orari Settimana Precedente
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -417,7 +531,9 @@ export default function TeamSchedule() {
                     key={shift.id}
                     className={cn(
                       'relative flex items-center gap-1 px-2 py-1 rounded text-xs group select-none',
-                      SHIFT_COLORS[shift.type].bg,
+                      shift.type === 'lavorativo'
+                        ? getLavorativoBg(shift.start_time)
+                        : SHIFT_COLORS[shift.type].bg,
                       SHIFT_COLORS[shift.type].text
                     )}
                     style={{ minWidth: 90 }}
@@ -550,6 +666,7 @@ export default function TeamSchedule() {
                     <th key={day} className="px-6 py-3 center text-sm font-semibold text-gray-900">{day} {format(weekDays[index], 'd/MM')}</th>
                   ))}
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Totale Ore</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -565,11 +682,19 @@ export default function TeamSchedule() {
                       >
                         <div className="space-y-1">
                           {getShiftsForEmployeeAndDate(employee.id, date).map((shift) => (
-                            <div key={shift.id} 
-                            onClick={() => {
-                              if (userRole !== 'employee') handleEditShift(shift, date)
-                            }} 
-                            className={cn('px-1 py-1 rounded text-xs cursor-pointer hover:opacity-80 group relative', SHIFT_COLORS[shift.type].bg, SHIFT_COLORS[shift.type].text)} title={shift.note || ''}>
+                            <div key={shift.id}
+                              onClick={() => {
+                                if (userRole !== 'employee') handleEditShift(shift, date)
+                              }}
+                              className={cn(
+                                'px-1 py-1 rounded text-xs cursor-pointer hover:opacity-80 group relative',
+                                shift.type === 'lavorativo'
+                                  ? getLavorativoBg(shift.start_time)
+                                  : SHIFT_COLORS[shift.type].bg,
+                                SHIFT_COLORS[shift.type].text
+                              )}
+                              title={shift.note || ''}
+                            >
                               <div className="flex items-center gap-1 justify-center">
                                 {SHIFT_ICONS[shift.type] && (
                                   <span className="inline-block">{React.createElement(SHIFT_ICONS[shift.type]!, { size: 12 })}</span>
@@ -591,6 +716,53 @@ export default function TeamSchedule() {
                       <div className="flex flex-col">
                         <span><strong>{calculateWeeklyHours(employee.id)}</strong></span>
                         <span className="text-gray-500"><strong>{employee.weekly_hours || 40}</strong>h</span>
+                        
+                      </div>
+                    </td>
+                    <td>
+                      <div className="flex flex-col items-center">
+                        {userRole !== 'employee' && (
+                          <Menu as="div" className="relative inline-block text-left print:hidden">
+                            <Menu.Button className="flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-200">
+                              <MoreVertical size={18} />
+                              <span className="sr-only">Azioni</span>
+                            </Menu.Button>
+                            <Transition
+                              as={React.Fragment}
+                              enter="transition ease-out duration-100"
+                              enterFrom="transform opacity-0 scale-95"
+                              enterTo="transform opacity-100 scale-100"
+                              leave="transition ease-in duration-75"
+                              leaveFrom="transform opacity-100 scale-100"
+                              leaveTo="transform opacity-0 scale-95"
+                            >
+                              <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                <div className="py-1">
+                                  <Menu.Item>
+                                    {({ active }) => (
+                                      <button
+                                        className={`$ {active ? 'bg-gray-100' : ''} w-full text-left px-4 py-2 text-sm text-gray-700`}
+                                        onClick={() => handleCopyPreviousWeekForEmployee(employee.id)}
+                                      >
+                                        Copia sett. prec.
+                                      </button>
+                                    )}
+                                  </Menu.Item>
+                                  <Menu.Item>
+                                    {({ active }) => (
+                                      <button
+                                        className={`$ {active ? 'bg-red-100 text-red-700' : ''} w-full text-left px-4 py-2 text-sm`}
+                                        onClick={() => handleDeleteWeekForEmployee(employee.id)}
+                                      >
+                                        Elimina settimana
+                                      </button>
+                                    )}
+                                  </Menu.Item>
+                                </div>
+                              </Menu.Items>
+                            </Transition>
+                          </Menu>
+                        )}
                       </div>
                     </td>
                   </tr>
