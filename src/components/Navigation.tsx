@@ -40,7 +40,6 @@ export default function Navigation() {
       { href: '/employees', label: 'Dipendenti' },
       { href: '/requests', label: 'Richieste' }
     ] : []),
-    { href: '/profile', label: 'Profilo' }
   ]
 
   return (
@@ -65,7 +64,17 @@ export default function Navigation() {
           </div>
           <div className="flex items-center gap-4">
             {userName && (
-              <span className="text-sm font-medium text-gray-700">{userName}</span>
+              <Link 
+              href='/profile'
+              className={cn(
+                'text-sm font-medium transition-colors hover:text-primary',
+                pathname === '/profile'
+                  ? 'text-primary'
+                  : 'text-muted-foreground'
+              )}
+            >
+              {userName}
+            </Link>
             )}
             <Button
               variant="ghost"

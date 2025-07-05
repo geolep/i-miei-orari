@@ -687,16 +687,7 @@ export default function TeamSchedule() {
               <span className="text-lg font-medium">
                 Settimana del {format(startDate, 'd MMMM yyyy', { locale: it })}
               </span>
-              {userRole !== 'employee' && (
-                <>
-                  <Button variant="destructive" onClick={handleDeleteAllSchedule}>
-                    Elimina Tutti gli Orari
-                  </Button>
-                  <Button variant="secondary" onClick={handleCopyPreviousWeek}>
-                    Copia Orari Settimana Precedente
-                  </Button>
-                </>
-              )}
+              
             </div>
           </div>
           
@@ -735,7 +726,7 @@ export default function TeamSchedule() {
           
 
           {/* Schedule Table */}
-          <div id="print-orari-table" className=" border rounded-lg my-3 print:my-0 print:border-0 print:rounded-none print:shadow-none print:block">
+          <div id="print-orari-table" className="overflow-x-auto border rounded-lg my-3 print:my-3 print:border-0 print:rounded-none print:shadow-none print:block">
             <table className="min-w-full bg-white print:bg-white print:w-full print:text-xs print:leading-tight print:[&_th]:px-2 print:[&_td]:px-2 print:[&_th]:py-1 print:[&_td]:py-1 print:[&_th]:text-xs print:[&_td]:text-xs">
               <thead>
                 <tr className="bg-gray-50 print:bg-white">
@@ -877,6 +868,16 @@ export default function TeamSchedule() {
               </Button>
               </div>
             )}
+            {userRole !== 'employee' && (
+                <>
+                  <Button variant="destructive" onClick={handleDeleteAllSchedule}>
+                    Elimina Tutti gli Orari
+                  </Button>
+                  <Button variant="secondary" onClick={handleCopyPreviousWeek}>
+                    Copia Orari Settimana Precedente
+                  </Button>
+                </>
+              )}
             {/* Pulsante stampa sopra la tabella */}
             <div className="flex justify-end mb-2 print:hidden">
               <Button variant="outline" onClick={() => window.print()}>Stampa</Button>

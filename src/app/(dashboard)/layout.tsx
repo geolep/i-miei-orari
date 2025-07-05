@@ -56,6 +56,11 @@ export default function DashboardLayout({
       <main className="pt-4">
         {children}
       </main>
+      <footer className="w-full mt-8 py-4 border-t text-center text-sm text-muted-foreground bg-background">
+        © {new Date().getFullYear()} I Miei Orari. Tutti i diritti riservati. |
+        <a href="/privacy" className="underline hover:text-primary ml-1">Privacy Policy</a> |
+        <a href="/termini" className="underline hover:text-primary ml-1">Termini di servizio</a>
+      </footer>
     </div>
   );
 } 
