@@ -566,6 +566,11 @@ export default function TeamSchedule() {
             selectedShift={selectedShift}
             employeeId={selectedEmployeeId}
             employeeName={employees.find(e => e.id === selectedEmployeeId)?.name + ' ' + employees.find(e => e.id === selectedEmployeeId)?.surname}
+            quickTimes={predefinedShifts.map(s => ({
+              label: `${s.start_time.substring(0,5)} - ${s.end_time.substring(0,5)}`,
+              start: s.start_time,
+              end: s.end_time
+            }))}
           />
 
           {/* Header */}
@@ -573,35 +578,7 @@ export default function TeamSchedule() {
             <p className="text-gray-600">Gestisci gli orari settimanali del team</p>
           </div>
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handlePreviousWeek}>
-                ← Precedente
-              </Button>
-              <Button variant="secondary" onClick={handleThisWeek}>
-                Questa Settimana
-              </Button>
-              <Button variant="outline" onClick={handleNextWeek}>
-                Successiva →
-              </Button>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-lg font-medium">
-                Settimana del {format(startDate, 'd MMMM yyyy', { locale: it })}
-              </span>
-              {userRole !== 'employee' && (
-                <>
-                  <Button variant="destructive" onClick={handleDeleteAllSchedule}>
-                    Elimina Tutti gli Orari
-                  </Button>
-                  <Button variant="secondary" onClick={handleCopyPreviousWeek}>
-                    Copia Orari Settimana Precedente
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
+          
 
           {/* Predefined Shifts Panel dinamico */}
           {userRole !== 'employee' && (
@@ -693,6 +670,37 @@ export default function TeamSchedule() {
             </div>
           )}
 
+          {/* Navigation */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handlePreviousWeek}>
+                ← Precedente
+              </Button>
+              <Button variant="secondary" onClick={handleThisWeek}>
+                Questa Settimana
+              </Button>
+              <Button variant="outline" onClick={handleNextWeek}>
+                Successiva →
+              </Button>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-lg font-medium">
+                Settimana del {format(startDate, 'd MMMM yyyy', { locale: it })}
+              </span>
+              {userRole !== 'employee' && (
+                <>
+                  <Button variant="destructive" onClick={handleDeleteAllSchedule}>
+                    Elimina Tutti gli Orari
+                  </Button>
+                  <Button variant="secondary" onClick={handleCopyPreviousWeek}>
+                    Copia Orari Settimana Precedente
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+          
+
           {/* Dialog per modifica */}
           <Dialog open={isEditPredefinedOpen} onOpenChange={setIsEditPredefinedOpen}>
             <DialogContent>
@@ -723,23 +731,11 @@ export default function TeamSchedule() {
             </DialogContent>
           </Dialog>
 
-          <div className='flex gap-2 justify-end mb-2'>
-            {userRole === 'employee' && (
-              <div className="flex justify-end mb-2 print:hidden">
-              <Button variant="default" onClick={() => setIsRequestModalOpen(true)}>
-                Richiedi Permesso/Malattia/Ferie
-              </Button>
-              </div>
-            )}
-            {/* Pulsante stampa sopra la tabella */}
-            <div className="flex justify-end mb-2 print:hidden">
-              <Button variant="outline" onClick={() => window.print()}>Stampa</Button>
-            </div>
-          </div>
+          
           
 
           {/* Schedule Table */}
-          <div id="print-orari-table" className="overflow-x-auto border rounded-lg my-3 print:my-0 print:border-0 print:rounded-none print:shadow-none print:block">
+          <div id="print-orari-table" className=" border rounded-lg my-3 print:my-0 print:border-0 print:rounded-none print:shadow-none print:block">
             <table className="min-w-full bg-white print:bg-white print:w-full print:text-xs print:leading-tight print:[&_th]:px-2 print:[&_td]:px-2 print:[&_th]:py-1 print:[&_td]:py-1 print:[&_th]:text-xs print:[&_td]:text-xs">
               <thead>
                 <tr className="bg-gray-50 print:bg-white">
@@ -823,7 +819,7 @@ export default function TeamSchedule() {
                                   <Menu.Item>
                                     {({ active }) => (
                                       <button
-                                        className={`$ {active ? 'bg-gray-100' : ''} w-full text-left px-4 py-2 text-sm text-gray-700`}
+                                        className={`$ {active ? 'bg-gray-100' : ''} w-full text-left px-4 py-2 text-sm hover:bg-gray-100`}
                                         onClick={() => handleCopyPreviousWeekForEmployee(employee.id)}
                                       >
                                         Copia sett. prec.
@@ -833,7 +829,7 @@ export default function TeamSchedule() {
                                   <Menu.Item>
                                     {({ active }) => (
                                       <button
-                                        className={`$ {active ? 'bg-red-100 text-red-700' : ''} w-full text-left px-4 py-2 text-sm`}
+                                        className={`$ {active ? 'bg-red-100 text-red-700' : ''} w-full text-left px-4 py-2 text-sm hover:bg-red-100`}
                                         onClick={() => handleDeleteWeekForEmployee(employee.id)}
                                       >
                                         Elimina settimana
@@ -843,7 +839,7 @@ export default function TeamSchedule() {
                                   <Menu.Item>
                                     {({ active }) => (
                                       <button
-                                        className={`$ {active ? 'bg-blue-100 text-blue-700' : ''} w-full text-left px-4 py-2 text-sm`}
+                                        className={`$ {active ? 'bg-blue-100 text-blue-700' : ''} w-full text-left px-4 py-2 text-sm hover:bg-blue-100`}
                                         onClick={() => handleCopyCurrentWeekAsTemplate(employee.id)}
                                       >
                                         Copia come settimana tipo
@@ -853,7 +849,7 @@ export default function TeamSchedule() {
                                   <Menu.Item>
                                     {({ active }) => (
                                       <button
-                                        className={`$ {active ? 'bg-green-100 text-green-700' : ''} w-full text-left px-4 py-2 text-sm`}
+                                        className={`$ {active ? 'bg-green-100 text-green-700' : ''} w-full text-left px-4 py-2 text-sm hover:bg-green-100`}
                                         onClick={() => handleInsertWeekTemplate(employee.id)}
                                       >
                                         Inserisci la settimana tipo
@@ -873,7 +869,19 @@ export default function TeamSchedule() {
             </table>
           </div>
 
-          
+          <div className='flex gap-2 justify-end mb-2'>
+            {userRole === 'employee' && (
+              <div className="flex justify-end mb-2 print:hidden">
+              <Button variant="default" onClick={() => setIsRequestModalOpen(true)}>
+                Richiedi Permesso/Malattia/Ferie
+              </Button>
+              </div>
+            )}
+            {/* Pulsante stampa sopra la tabella */}
+            <div className="flex justify-end mb-2 print:hidden">
+              <Button variant="outline" onClick={() => window.print()}>Stampa</Button>
+            </div>
+          </div>
 
           <Dialog open={isRequestModalOpen} onOpenChange={setIsRequestModalOpen}>
             <DialogContent>
@@ -985,7 +993,7 @@ export default function TeamSchedule() {
           .print\\:hidden { display: none !important; }
           .print\\:block { display: block !important; }
           table { font-size: 11px !important; }
-          th, td { padding: 2px 4px !important; }
+          th, td { padding: 4px 8px !important; }
         }
       `}</style>
     </div>

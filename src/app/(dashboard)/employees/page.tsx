@@ -156,6 +156,8 @@ export default function EmployeesPage() {
     note: '',
     template_name: 'Settimana standard'
   })
+  const [isWeekTemplateDialogOpen, setIsWeekTemplateDialogOpen] = useState(false)
+  const [weekTemplateEmployee, setWeekTemplateEmployee] = useState<Employee | null>(null)
 
   useEffect(() => {
     fetchEmployees()
@@ -521,43 +523,7 @@ export default function EmployeesPage() {
                       />
                     </div>
                   </div>
-                  <div className="mt-6">
-                    <h3 className="font-semibold mb-2">Settimana tipo</h3>
-                    <div className="mb-2 flex flex-col gap-2">
-                      {weekTemplate.length === 0 && <div className="text-gray-500 text-sm">Nessuna fascia oraria inserita</div>}
-                      {weekTemplate.map(row => (
-                        <div key={row.id} className="grid grid-cols-6 gap-2 items-center border rounded px-2 py-1">
-                          <span className="w-full">{WEEKDAYS[row.weekday]}</span>
-                          <span className="w-full">{row.start_time.substring(0,5)} - {row.end_time.substring(0,5)}</span>
-                          <span className="w-full">{SHIFT_TYPES.find(t => t.value === row.type)?.label}</span>
-                          <span className="w-full text-xs text-gray-500 col-span-2">{row.note}</span>
-                          <Button variant="ghost" size="icon" onClick={() => handleDeleteTemplateRow(row.id)}><Trash2 size={16}/></Button>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-6 gap-2 items-center mt-2">
-                      <Select value={String(newTemplate.weekday)} onValueChange={v => setNewTemplate(nt => ({...nt, weekday: Number(v)}))}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Giorno" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {WEEKDAYS.map((d, i) => <SelectItem key={i} value={String(i)}>{d}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <Input type="time" value={newTemplate.start_time} onChange={e => setNewTemplate(nt => ({...nt, start_time: e.target.value}))} />
-                      <Input type="time" value={newTemplate.end_time} onChange={e => setNewTemplate(nt => ({...nt, end_time: e.target.value}))} />
-                      <Select value={newTemplate.type} onValueChange={v => setNewTemplate(nt => ({...nt, type: v}))}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Tipo" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SHIFT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <Input type="text" placeholder="Note" value={newTemplate.note} onChange={e => setNewTemplate(nt => ({...nt, note: e.target.value}))} />
-                      <Button variant="outline" size="icon" onClick={handleAddTemplateRow}><Plus size={18}/></Button>
-                    </div>
-                  </div>
+                  
                   <div className="flex justify-between gap-2">
                     {selectedEmployee && (
                       <Button type="button" variant="destructive" onClick={() => { handleDelete(selectedEmployee.id); setIsDialogOpen(false); }}>
@@ -628,6 +594,11 @@ export default function EmployeesPage() {
                       onClick={() => openDetailModal('malattia', 'Malattia', employee.id, `${employee.surname} ${employee.name}`)}>
                     {stats.malattia}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <Button variant="outline" size="sm" onClick={() => { setWeekTemplateEmployee(employee); setIsWeekTemplateDialogOpen(true); fetchWeekTemplate(employee.id); }}>
+                      Settimana tipo
+                    </Button>
+                  </td>
                 </tr>
               )
             })}
@@ -643,6 +614,55 @@ export default function EmployeesPage() {
         type={detailModal.type}
         employeeName={detailModal.employeeName}
       />
+
+      <Dialog open={isWeekTemplateDialogOpen} onOpenChange={setIsWeekTemplateDialogOpen}>
+        <DialogContent className="max-w-lg w-full">
+          <DialogHeader>
+            <DialogTitle>Settimana tipo {weekTemplateEmployee ? weekTemplateEmployee.surname + ' ' + weekTemplateEmployee.name : ''}</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              {weekTemplate.length === 0 && <div className="text-gray-500 text-sm">Nessuna fascia oraria inserita</div>}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {weekTemplate.map(row => (
+                  <div key={row.id} className="flex flex-col border rounded px-3 py-2 bg-gray-50">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-medium">{WEEKDAYS[row.weekday]}</span>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteTemplateRow(row.id)}><Trash2 size={16}/></Button>
+                    </div>
+                    <div className="flex flex-col text-sm">
+                      <span>{row.start_time.substring(0,5)} - {row.end_time.substring(0,5)}</span>
+                      <span>{SHIFT_TYPES.find(t => t.value === row.type)?.label}</span>
+                      {row.note && <span className="text-xs text-gray-500">{row.note}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 items-center">
+              <Select value={String(newTemplate.weekday)} onValueChange={v => setNewTemplate(nt => ({...nt, weekday: Number(v)}))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Giorno" />
+                </SelectTrigger>
+                <SelectContent>
+                  {WEEKDAYS.map((d, i) => <SelectItem key={i} value={String(i)}>{d}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Input type="time" value={newTemplate.start_time} onChange={e => setNewTemplate(nt => ({...nt, start_time: e.target.value}))} />
+              <Input type="time" value={newTemplate.end_time} onChange={e => setNewTemplate(nt => ({...nt, end_time: e.target.value}))} />
+              <Select value={newTemplate.type} onValueChange={v => setNewTemplate(nt => ({...nt, type: v}))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SHIFT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="icon" onClick={handleAddTemplateRow}><Plus size={18}/></Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 } 

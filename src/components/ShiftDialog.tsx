@@ -26,6 +26,12 @@ import { cn } from '@/lib/utils'
 type Shift = Omit<Database['public']['Tables']['shifts']['Row'], 'type'> & { type: ShiftType }
 type ShiftType = 'lavorativo' | 'permesso' | 'ferie' | 'malattia' | 'straordinario'
 
+interface QuickTime {
+  label: string;
+  start: string;
+  end: string;
+}
+
 interface ShiftDialogProps {
   isOpen: boolean
   onClose: () => void
@@ -35,15 +41,8 @@ interface ShiftDialogProps {
   selectedShift?: Shift
   employeeId: string
   employeeName: string
+  quickTimes?: QuickTime[]
 }
-
-const QUICK_TIMES = [
-  { label: '09:30 - 12:30', start: '09:30', end: '12:30' },
-  { label: '10:00 - 13:00', start: '10:00', end: '13:00' },
-  { label: '15:50 - 19:30', start: '15:50', end: '19:30' },
-  { label: '12:50 - 19:30', start: '12:50', end: '19:30' },
-  { label: '10:00 - 16:40', start: '10:00', end: '16:40' },
-]
 
 export default function ShiftDialog({
   isOpen,
@@ -54,6 +53,7 @@ export default function ShiftDialog({
   selectedShift,
   employeeId,
   employeeName,
+  quickTimes = [],
 }: ShiftDialogProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -178,7 +178,7 @@ export default function ShiftDialog({
               <div>
                 <Label className="text-gray-700">Orari Veloci:</Label>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {QUICK_TIMES.map((time) => (
+                  {quickTimes.map((time) => (
                     <button
                       key={time.label}
                       type="button"
