@@ -76,6 +76,7 @@ export default function TeamSchedule() {
   const [requestStartTime, setRequestStartTime] = useState<string>('')
   const [requestEndTime, setRequestEndTime] = useState<string>('')
   const [requestNote, setRequestNote] = useState<string>('')
+  const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null)
 
   const startDate = startOfWeek(currentDate, { weekStartsOn: 1 })
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i))
@@ -505,6 +506,33 @@ export default function TeamSchedule() {
     }
   };
 
+  // Funzione per calcolare la posizione del menu
+  const calculateMenuPosition = (buttonElement: HTMLElement) => {
+    const rect = buttonElement.getBoundingClientRect()
+    const menuWidth = 192 // w-48 = 12rem = 192px
+    const menuHeight = 160 // altezza approssimativa del menu
+    
+    let x = rect.right - menuWidth
+    let y = rect.bottom + 8 // 8px di margine
+    
+    // Se il menu va oltre il bordo destro, posizionalo a sinistra del bottone
+    if (x < 0) {
+      x = rect.left - menuWidth
+    }
+    
+    // Se il menu va oltre il bordo inferiore, posizionalo sopra il bottone
+    if (y + menuHeight > window.innerHeight) {
+      y = rect.top - menuHeight - 8
+    }
+    
+    // Assicurati che il menu non vada oltre il bordo superiore
+    if (y < 0) {
+      y = 8
+    }
+    
+    return { x, y }
+  }
+
   // Funzione per inserire la settimana tipo negli orari della settimana corrente
   const handleInsertWeekTemplate = async (employeeId: string) => {
     try {
@@ -792,7 +820,13 @@ export default function TeamSchedule() {
                       <div className="flex flex-col items-center">
                         {userRole !== 'employee' && (
                           <Menu as="div" className="relative inline-block text-left print:hidden">
-                            <Menu.Button className="flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-200">
+                            <Menu.Button 
+                              className="flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-200"
+                              onClick={(e) => {
+                                const position = calculateMenuPosition(e.currentTarget)
+                                setMenuPosition(position)
+                              }}
+                            >
                               <MoreVertical size={18} />
                               <span className="sr-only">Azioni</span>
                             </Menu.Button>
@@ -804,13 +838,20 @@ export default function TeamSchedule() {
                               leave="transition ease-in duration-75"
                               leaveFrom="transform opacity-100 scale-100"
                               leaveTo="transform opacity-0 scale-95"
+                              afterLeave={() => setMenuPosition(null)}
                             >
-                              <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                              <Menu.Items 
+                                className="fixed z-50 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                                style={{
+                                  left: menuPosition?.x ?? 0,
+                                  top: menuPosition?.y ?? 0
+                                }}
+                              >
                                 <div className="py-1">
                                   <Menu.Item>
                                     {({ active }) => (
                                       <button
-                                        className={`$ {active ? 'bg-gray-100' : ''} w-full text-left px-4 py-2 text-sm hover:bg-gray-100`}
+                                        className={`${active ? 'bg-gray-100' : ''} w-full text-left px-4 py-2 text-sm hover:bg-gray-100`}
                                         onClick={() => handleCopyPreviousWeekForEmployee(employee.id)}
                                       >
                                         Copia sett. prec.
@@ -820,7 +861,7 @@ export default function TeamSchedule() {
                                   <Menu.Item>
                                     {({ active }) => (
                                       <button
-                                        className={`$ {active ? 'bg-red-100 text-red-700' : ''} w-full text-left px-4 py-2 text-sm hover:bg-red-100`}
+                                        className={`${active ? 'bg-red-100 text-red-700' : ''} w-full text-left px-4 py-2 text-sm hover:bg-red-100`}
                                         onClick={() => handleDeleteWeekForEmployee(employee.id)}
                                       >
                                         Elimina settimana
@@ -830,7 +871,7 @@ export default function TeamSchedule() {
                                   <Menu.Item>
                                     {({ active }) => (
                                       <button
-                                        className={`$ {active ? 'bg-blue-100 text-blue-700' : ''} w-full text-left px-4 py-2 text-sm hover:bg-blue-100`}
+                                        className={`${active ? 'bg-blue-100 text-blue-700' : ''} w-full text-left px-4 py-2 text-sm hover:bg-blue-100`}
                                         onClick={() => handleCopyCurrentWeekAsTemplate(employee.id)}
                                       >
                                         Copia come settimana tipo
@@ -840,7 +881,7 @@ export default function TeamSchedule() {
                                   <Menu.Item>
                                     {({ active }) => (
                                       <button
-                                        className={`$ {active ? 'bg-green-100 text-green-700' : ''} w-full text-left px-4 py-2 text-sm hover:bg-green-100`}
+                                        className={`${active ? 'bg-green-100 text-green-700' : ''} w-full text-left px-4 py-2 text-sm hover:bg-green-100`}
                                         onClick={() => handleInsertWeekTemplate(employee.id)}
                                       >
                                         Inserisci la settimana tipo
