@@ -36,6 +36,7 @@ export default function Navigation() {
 
   const links = [
     { href: '/dashboard', label: 'Orari Team' },
+    { href: '/incassi', label: 'Incassi' },
     ...(userRole !== 'employee' ? [
       { href: '/employees', label: 'Dipendenti' },
       { href: '/requests', label: 'Richieste' }

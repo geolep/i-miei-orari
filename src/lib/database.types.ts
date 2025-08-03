@@ -104,6 +104,32 @@ export interface Database {
           note?: string | null
           created_at?: string | null
         }
+      },
+      incassi: {
+        Row: {
+          id: string
+          data: string
+          importo: number
+          note: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          data: string
+          importo: number
+          note?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          data?: string
+          importo?: number
+          note?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
       }
     }
   }
