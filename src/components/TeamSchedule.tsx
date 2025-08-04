@@ -583,7 +583,7 @@ export default function TeamSchedule() {
 
   return (
     <div>
-      <div className="container mx-auto p-4 flex flex-col lg:flex-row gap-4">
+      <div className="container mx-auto p-2 sm:p-4 flex flex-col lg:flex-row gap-4">
         <div className="flex-1">
           <ShiftDialog
             isOpen={isDialogOpen}
@@ -602,8 +602,8 @@ export default function TeamSchedule() {
           />
 
           {/* Header */}
-          <div className="mb-8">
-            <p className="text-gray-600">Gestisci gli orari settimanali del team</p>
+          <div className="mb-4 sm:mb-8">
+            <h1 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Gestisci gli orari settimanali del team</h1>
           </div>
 
           
@@ -698,24 +698,26 @@ export default function TeamSchedule() {
             </div>
           )}
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handlePreviousWeek}>
+          {/* Navigation - Mobile Friendly */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            {/* Navigation Buttons */}
+            <div className="flex gap-2 justify-center sm:justify-start mobile-button-group">
+              <Button variant="outline" size="sm" onClick={handlePreviousWeek} className="text-xs sm:text-sm touch-target">
                 ← Precedente
               </Button>
-              <Button variant="secondary" onClick={handleThisWeek}>
+              <Button variant="secondary" size="sm" onClick={handleThisWeek} className="text-xs sm:text-sm touch-target">
                 Questa Settimana
               </Button>
-              <Button variant="outline" onClick={handleNextWeek}>
+              <Button variant="outline" size="sm" onClick={handleNextWeek} className="text-xs sm:text-sm touch-target">
                 Successiva →
               </Button>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-lg font-medium">
+            
+            {/* Week Display */}
+            <div className="text-center sm:text-right">
+              <span className="text-sm sm:text-lg font-medium">
                 Settimana del {format(startDate, 'd MMMM yyyy', { locale: it })}
               </span>
-              
             </div>
           </div>
           
@@ -753,27 +755,38 @@ export default function TeamSchedule() {
           
           
 
-          {/* Schedule Table */}
-          <div id="print-orari-table" className="overflow-x-auto border rounded-lg my-3 print:my-3 print:border-0 print:rounded-none print:shadow-none print:block">
+          {/* Schedule Table - Mobile Friendly */}
+          <div id="print-orari-table" className="overflow-x-auto table-scroll border rounded-lg my-3 print:my-3 print:border-0 print:rounded-none print:shadow-none print:block">
             <table className="min-w-full bg-white print:bg-white print:w-full print:text-xs print:leading-tight print:[&_th]:px-2 print:[&_td]:px-2 print:[&_th]:py-1 print:[&_td]:py-1 print:[&_th]:text-xs print:[&_td]:text-xs">
               <thead>
                 <tr className="bg-gray-50 print:bg-white">
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Dipendenti</th>
+                  <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-900">Dipendenti</th>
                   {DAYS_OF_WEEK.map((day, index) => (
-                    <th key={day} className="px-6 py-3 center text-sm font-semibold text-gray-900">{day} {format(weekDays[index], 'd/MM')}</th>
+                    <th key={day} className="px-1 sm:px-6 py-2 sm:py-3 center text-xs sm:text-sm font-semibold text-gray-900">
+                      <div className="flex flex-col">
+                        <span className="hidden sm:block">{day}</span>
+                        <span className="sm:hidden">{day}</span>
+                        <span className="text-xs">{format(weekDays[index], 'd/MM')}</span>
+                      </div>
+                    </th>
                   ))}
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Totale Ore</th>
-                  <th></th>
+                  <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-900">Ore</th>
+                  <th className="px-1 sm:px-6 py-2 sm:py-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {employees.map((employee) => (
                   <tr key={employee.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{employee.surname} {employee.name}</td>
+                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{employee.surname}</span>
+                        <span className="text-gray-500">{employee.name}</span>
+                      </div>
+                    </td>
                     {weekDays.map((date) => (
                       <td 
                         key={date.toString()} 
-                        className="px-6 py-4 relative min-h-[100px] text-center"
+                        className="px-1 sm:px-6 py-2 sm:py-4 relative min-h-[80px] sm:min-h-[100px] text-center"
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={(e) => handleDrop(e, employee.id, date)}
                       >
@@ -796,7 +809,7 @@ export default function TeamSchedule() {
                                 {SHIFT_ICONS[shift.type] && (
                                   <span className="inline-block">{React.createElement(SHIFT_ICONS[shift.type]!, { size: 12 })}</span>
                                 )}
-                                <span>{shift.start_time.substring(0, 5)} - {shift.end_time.substring(0, 5)}</span>
+                                <span className="text-xs">{shift.start_time.substring(0, 5)} - {shift.end_time.substring(0, 5)}</span>
                               </div>
                               {userRole !== 'employee' && (
                                 <button onClick={(e) => handleQuickDeleteShift(shift.id, e)} className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 hover:text-red-600 transition-opacity text-lg font-bold bg-white rounded-full w-5 h-5 flex items-center justify-center shadow-sm border border-gray-200 print:hidden" title="Elimina turno">×</button>
@@ -805,14 +818,14 @@ export default function TeamSchedule() {
                           ))}
                         </div>
                         {userRole !== 'employee' && (
-                          <Button variant="ghost" size="sm" className="relative bottom-1 h-6 w-[100%] p-0 print:hidden" onClick={() => handleAddShift(employee.id, date)}>+</Button>
+                          <Button variant="ghost" size="sm" className="relative bottom-1 h-6 w-[100%] p-0 print:hidden text-xs" onClick={() => handleAddShift(employee.id, date)}>+</Button>
                         )}
                       </td>
                     ))}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
                       <div className="flex flex-col">
                         <span><strong>{calculateWeeklyHours(employee.id)}</strong></span>
-                        <span className="text-gray-500"><strong>{employee.weekly_hours || 40}</strong>h</span>
+                        <span className="text-gray-500 text-xs"><strong>{employee.weekly_hours || 40}</strong>h</span>
                         
                       </div>
                     </td>
@@ -821,13 +834,13 @@ export default function TeamSchedule() {
                         {userRole !== 'employee' && (
                           <Menu as="div" className="relative inline-block text-left print:hidden">
                             <Menu.Button 
-                              className="flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-200"
+                              className="flex items-center gap-1 px-1 sm:px-2 py-1 rounded hover:bg-gray-200"
                               onClick={(e) => {
                                 const position = calculateMenuPosition(e.currentTarget)
                                 setMenuPosition(position)
                               }}
                             >
-                              <MoreVertical size={18} />
+                              <MoreVertical size={16} className="sm:w-[18px] sm:h-[18px]" />
                               <span className="sr-only">Azioni</span>
                             </Menu.Button>
                             <Transition
@@ -901,27 +914,28 @@ export default function TeamSchedule() {
             </table>
           </div>
 
-          <div className='flex gap-2 justify-end mb-2'>
+          {/* Action Buttons - Mobile Friendly */}
+          <div className='flex flex-col sm:flex-row gap-2 justify-end mb-2'>
             {userRole === 'employee' && (
               <div className="flex justify-end mb-2 print:hidden">
-              <Button variant="default" onClick={() => setIsRequestModalOpen(true)}>
-                Richiedi Permesso/Malattia/Ferie
-              </Button>
+                <Button variant="default" size="sm" onClick={() => setIsRequestModalOpen(true)} className="w-full sm:w-auto touch-target">
+                  Richiedi Permesso/Malattia/Ferie
+                </Button>
               </div>
             )}
             {userRole !== 'employee' && (
-                <>
-                  <Button variant="destructive" onClick={handleDeleteAllSchedule}>
-                    Elimina Tutti gli Orari
-                  </Button>
-                  <Button variant="secondary" onClick={handleCopyPreviousWeek}>
-                    Copia Orari Settimana Precedente
-                  </Button>
-                </>
-              )}
+              <div className="flex flex-col sm:flex-row gap-2 mobile-button-group">
+                <Button variant="destructive" size="sm" onClick={handleDeleteAllSchedule} className="w-full sm:w-auto touch-target">
+                  Elimina Tutti gli Orari
+                </Button>
+                <Button variant="secondary" size="sm" onClick={handleCopyPreviousWeek} className="w-full sm:w-auto touch-target">
+                  Copia Orari Settimana Precedente
+                </Button>
+              </div>
+            )}
             {/* Pulsante stampa sopra la tabella */}
             <div className="flex justify-end mb-2 print:hidden">
-              <Button variant="outline" onClick={() => window.print()}>Stampa</Button>
+              <Button variant="outline" size="sm" onClick={() => window.print()} className="w-full sm:w-auto touch-target">Stampa</Button>
             </div>
           </div>
 

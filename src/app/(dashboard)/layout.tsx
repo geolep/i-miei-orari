@@ -53,13 +53,18 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <main className="pt-4">
+      <main className="pt-2 sm:pt-4">
         {children}
       </main>
-      <footer className="w-full mt-8 py-4 border-t text-center text-sm text-muted-foreground bg-background">
-        © {new Date().getFullYear()} I Miei Orari. Tutti i diritti riservati. |
-        <a href="/privacy" className="underline hover:text-primary ml-1">Privacy Policy</a> |
-        <a href="/termini" className="underline hover:text-primary ml-1">Termini di servizio</a>
+      <footer className="w-full mt-4 sm:mt-8 py-2 sm:py-4 border-t text-center text-xs sm:text-sm text-muted-foreground bg-background px-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
+          <span>© {new Date().getFullYear()} I Miei Orari. Tutti i diritti riservati.</span>
+          <div className="flex gap-2">
+            <a href="/privacy" className="underline hover:text-primary">Privacy Policy</a>
+            <span>|</span>
+            <a href="/termini" className="underline hover:text-primary">Termini di servizio</a>
+          </div>
+        </div>
       </footer>
     </div>
   );
