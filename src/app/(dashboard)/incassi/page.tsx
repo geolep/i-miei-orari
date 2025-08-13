@@ -49,11 +49,14 @@ export default function IncassiPage() {
   const [settimanaCorrente, setSettimanaCorrente] = useState<Settimana>(() => {
     const oggi = new Date();
     const inizioSettimana = new Date(oggi);
-    inizioSettimana.setDate(oggi.getDate() - oggi.getDay()); // Domenica
+    // Calcola il lunedì della settimana corrente
+    const giornoSettimana = oggi.getDay(); // 0 = domenica, 1 = lunedì, ..., 6 = sabato
+    const giorniDaLunedi = giornoSettimana === 0 ? 6 : giornoSettimana - 1; // Se è domenica, vai a lunedì precedente
+    inizioSettimana.setDate(oggi.getDate() - giorniDaLunedi);
     inizioSettimana.setHours(0, 0, 0, 0);
     
     const fineSettimana = new Date(inizioSettimana);
-    fineSettimana.setDate(inizioSettimana.getDate() + 6); // Sabato
+    fineSettimana.setDate(inizioSettimana.getDate() + 6); // Domenica
     fineSettimana.setHours(23, 59, 59, 999);
     
     return { inizio: inizioSettimana, fine: fineSettimana };
@@ -118,23 +121,23 @@ export default function IncassiPage() {
     const confrontoSettimanaPrecedente = totalePeriodoPrecedente > 0 ? 
       ((totaleRange - totalePeriodoPrecedente) / totalePeriodoPrecedente) * 100 : 0;
 
-    // Calcolo trend settimanale (ultimi 7 giorni vs 7 giorni precedenti)
-    const oggi = new Date();
-    const setteGiorniFa = new Date(oggi.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const quattordiciGiorniFa = new Date(oggi.getTime() - 14 * 24 * 60 * 60 * 1000);
+    // Calcolo trend settimanale (periodo corrente vs periodo precedente di stessa durata)
+    const inizioPeriodoPrecedenteTrend = new Date(rangeCorrente.inizio.getTime() - durataRange);
+    const finePeriodoPrecedenteTrend = new Date(rangeCorrente.inizio.getTime() - 1);
 
-    const incassiUltimaSettimana = dati.filter(incasso => 
-      new Date(incasso.data) >= setteGiorniFa
-    );
-    const incassiSettimanaPrecedenteTrend = dati.filter(incasso => 
-      new Date(incasso.data) >= quattordiciGiorniFa && 
-      new Date(incasso.data) < setteGiorniFa
-    );
+    const incassiPeriodoCorrenteTrend = dati.filter(incasso => {
+      const dataIncasso = new Date(incasso.data);
+      return dataIncasso >= rangeCorrente.inizio && dataIncasso <= rangeCorrente.fine;
+    });
+    const incassiPeriodoPrecedenteTrend = dati.filter(incasso => {
+      const dataIncasso = new Date(incasso.data);
+      return dataIncasso >= inizioPeriodoPrecedenteTrend && dataIncasso <= finePeriodoPrecedenteTrend;
+    });
 
-    const totaleUltimaSettimana = incassiUltimaSettimana.reduce((sum: number, incasso: Incasso) => sum + incasso.importo, 0);
-    const totaleSettimanaPrecedenteTrend = incassiSettimanaPrecedenteTrend.reduce((sum: number, incasso: Incasso) => sum + incasso.importo, 0);
-    const trendSettimanale = totaleSettimanaPrecedenteTrend > 0 ? 
-      ((totaleUltimaSettimana - totaleSettimanaPrecedenteTrend) / totaleSettimanaPrecedenteTrend) * 100 : 0;
+    const totalePeriodoCorrenteTrend = incassiPeriodoCorrenteTrend.reduce((sum: number, incasso: Incasso) => sum + incasso.importo, 0);
+    const totalePeriodoPrecedenteTrend = incassiPeriodoPrecedenteTrend.reduce((sum: number, incasso: Incasso) => sum + incasso.importo, 0);
+    const trendSettimanale = totalePeriodoPrecedenteTrend > 0 ? 
+      ((totalePeriodoCorrenteTrend - totalePeriodoPrecedenteTrend) / totalePeriodoPrecedenteTrend) * 100 : 0;
 
     // Conta i giorni con incassi nel range corrente
     const giorniConIncassi = new Set(incassiRange.map(incasso => incasso.data)).size;
@@ -180,11 +183,14 @@ export default function IncassiPage() {
   const vaiOggi = () => {
     const oggi = new Date();
     const inizioSettimana = new Date(oggi);
-    inizioSettimana.setDate(oggi.getDate() - oggi.getDay()); // Domenica
+    // Calcola il lunedì della settimana corrente
+    const giornoSettimana = oggi.getDay(); // 0 = domenica, 1 = lunedì, ..., 6 = sabato
+    const giorniDaLunedi = giornoSettimana === 0 ? 6 : giornoSettimana - 1; // Se è domenica, vai a lunedì precedente
+    inizioSettimana.setDate(oggi.getDate() - giorniDaLunedi);
     inizioSettimana.setHours(0, 0, 0, 0);
     
     const fineSettimana = new Date(inizioSettimana);
-    fineSettimana.setDate(inizioSettimana.getDate() + 6); // Sabato
+    fineSettimana.setDate(inizioSettimana.getDate() + 6); // Domenica
     fineSettimana.setHours(23, 59, 59, 999);
     
     setSettimanaCorrente({ inizio: inizioSettimana, fine: fineSettimana });
@@ -230,6 +236,22 @@ export default function IncassiPage() {
           <Plus className="h-4 w-4" />
           Nuovo Incasso
         </Button>
+      </div>
+
+      {/* Grafici */}
+      <div className="grid grid-cols-1 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Trend Temporale</CardTitle>
+            <CardDescription>Andamento degli incassi nel tempo</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <IncassiChart 
+              incassi={incassi} 
+              periodoCorrente={getRangeCorrente()}
+            />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Selettore Periodo */}
@@ -385,7 +407,9 @@ export default function IncassiPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Trend Settimanale</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {modalitaVisualizzazione === 'settimana' ? 'Trend Settimanale' : 'Trend Periodo'}
+            </CardTitle>
             {statistiche.trendSettimanale >= 0 ? (
               <TrendingUp className="h-4 w-4 text-green-600" />
             ) : (
@@ -396,7 +420,9 @@ export default function IncassiPage() {
             <div className={`text-2xl font-bold ${statistiche.trendSettimanale >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {statistiche.trendSettimanale >= 0 ? '+' : ''}{statistiche.trendSettimanale.toFixed(1)}%
             </div>
-            <p className="text-xs text-muted-foreground">vs settimana precedente</p>
+            <p className="text-xs text-muted-foreground">
+              {modalitaVisualizzazione === 'settimana' ? 'vs settimana precedente' : 'vs periodo precedente'}
+            </p>
           </CardContent>
         </Card>
 
@@ -419,36 +445,7 @@ export default function IncassiPage() {
         </Card>
       </div>
 
-      {/* Grafici */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Trend Temporale</CardTitle>
-            <CardDescription>Andamento degli incassi nel tempo</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <IncassiChart incassi={incassi.filter(incasso => {
-              const dataIncasso = new Date(incasso.data);
-              const rangeCorrente = getRangeCorrente();
-              return dataIncasso >= rangeCorrente.inizio && dataIncasso <= rangeCorrente.fine;
-            })} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Distribuzione per Giorno</CardTitle>
-            <CardDescription>Incassi distribuiti per giorno della settimana</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <IncassiChart incassi={incassi.filter(incasso => {
-              const dataIncasso = new Date(incasso.data);
-              const rangeCorrente = getRangeCorrente();
-              return dataIncasso >= rangeCorrente.inizio && dataIncasso <= rangeCorrente.fine;
-            })} tipo="giorni" />
-          </CardContent>
-        </Card>
-      </div>
+      
 
       {/* Tabella */}
       <Card>
