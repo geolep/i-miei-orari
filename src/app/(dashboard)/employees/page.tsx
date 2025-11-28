@@ -43,6 +43,52 @@ const SHIFT_TYPES = [
   { value: 'straordinario', label: 'Straordinario' },
 ]
 
+// Funzione per calcolare la Pasqua (algoritmo di Gauss)
+const calculateEaster = (year: number): Date => {
+  const a = year % 19
+  const b = Math.floor(year / 100)
+  const c = year % 100
+  const d = Math.floor(b / 4)
+  const e = b % 4
+  const f = Math.floor((b + 8) / 25)
+  const g = Math.floor((b - f + 1) / 3)
+  const h = (19 * a + b - d - g + 15) % 30
+  const i = Math.floor(c / 4)
+  const k = c % 4
+  const l = (32 + 2 * e + 2 * i - h - k) % 7
+  const m = Math.floor((a + 11 * h + 22 * l) / 451)
+  const month = Math.floor((h + l - 7 * m + 114) / 31)
+  const day = ((h + l - 7 * m + 114) % 31) + 1
+  return new Date(year, month - 1, day)
+}
+
+// Funzione per ottenere tutte le festività italiane per un dato anno
+const getItalianHolidays = (year: number): Set<string> => {
+  const holidays = new Set<string>()
+  
+  // Festività fisse
+  holidays.add(`${year}-01-01`) // Capodanno
+  holidays.add(`${year}-01-06`) // Epifania
+  holidays.add(`${year}-04-25`) // Festa della Liberazione
+  holidays.add(`${year}-05-01`) // Festa del Lavoro
+  holidays.add(`${year}-06-02`) // Festa della Repubblica
+  holidays.add(`${year}-08-15`) // Ferragosto
+  holidays.add(`${year}-11-01`) // Ognissanti
+  holidays.add(`${year}-12-08`) // Immacolata Concezione
+  holidays.add(`${year}-12-25`) // Natale
+  holidays.add(`${year}-12-26`) // Santo Stefano
+  
+  // Festività mobili (Pasqua e Pasquetta)
+  const easter = calculateEaster(year)
+  const easterMonday = new Date(easter)
+  easterMonday.setDate(easterMonday.getDate() + 1)
+  
+  holidays.add(format(easter, 'yyyy-MM-dd'))
+  holidays.add(format(easterMonday, 'yyyy-MM-dd'))
+  
+  return holidays
+}
+
 type DetailModalProps = {
   isOpen: boolean
   onClose: () => void
@@ -50,13 +96,21 @@ type DetailModalProps = {
   shifts: any[]
   type: string
   employeeName: string
+  selectedYear: number
 }
 
-const DetailModal = ({ isOpen, onClose, title, shifts, type, employeeName }: DetailModalProps) => {
+const DetailModal = ({ isOpen, onClose, title, shifts, type, employeeName, selectedYear }: DetailModalProps) => {
+  // Ottieni le festività per l'anno selezionato
+  const holidays = getItalianHolidays(selectedYear)
+  
   // Filtra i turni per il tipo specifico
   const filteredShifts = shifts.filter(s => {
     if (type === 'maggiorate') {
-      return (s.type === 'lavorativo' || s.type === 'straordinario') && new Date(s.date).getDay() === 0
+      const day = new Date(s.date).getDay()
+      const isSunday = day === 0
+      const isHoliday = holidays.has(s.date)
+      const isMaggiorata = isSunday || isHoliday
+      return (s.type === 'lavorativo' || s.type === 'straordinario') && isMaggiorata
     }
     return s.type === type
   })
@@ -324,16 +378,25 @@ export default function EmployeesPage() {
     const empShifts = shifts.filter(s => s.employee_id === employeeId)
     let ordinarie = 0, straordinarie = 0, maggiorate = 0, ferie = 0, permessi = 0
     const malattiaDays = new Set<string>()
+    
+    // Ottieni le festività per l'anno selezionato
+    const holidays = getItalianHolidays(selectedYear)
+    
     empShifts.forEach(shift => {
       const start = parseISO(`${shift.date}T${shift.start_time}`)
       const end = parseISO(`${shift.date}T${shift.end_time}`)
       const mins = differenceInMinutes(end, start)
       const day = new Date(shift.date).getDay()
+      const shiftDateStr = shift.date // formato yyyy-MM-dd
+      const isHoliday = holidays.has(shiftDateStr)
+      const isSunday = day === 0
+      const isMaggiorata = isSunday || isHoliday
+      
       if (shift.type === 'lavorativo') {
-        if (day === 0) maggiorate += mins
+        if (isMaggiorata) maggiorate += mins
         else ordinarie += mins
       } else if (shift.type === 'straordinario') {
-        if (day === 0) maggiorate += mins
+        if (isMaggiorata) maggiorate += mins
         else straordinarie += mins
       } else if (shift.type === 'ferie') ferie += mins
       else if (shift.type === 'permesso') permessi += mins
@@ -613,6 +676,7 @@ export default function EmployeesPage() {
         shifts={shifts.filter(s => s.employee_id === detailModal.employeeId)}
         type={detailModal.type}
         employeeName={detailModal.employeeName}
+        selectedYear={selectedYear}
       />
 
       <Dialog open={isWeekTemplateDialogOpen} onOpenChange={setIsWeekTemplateDialogOpen}>
