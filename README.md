@@ -100,3 +100,15 @@ Struttura semplificata:
   - `supabase`, `supabaseClient`, utilità varie
 
 ---
+## Screenshots
+
+### Dashboard
+<img width="1775" height="926" alt="Screenshot 2026-01-28 alle 10 43 45" src="https://github.com/user-attachments/assets/49aa2691-95da-4b3f-9216-d5043cecaa97" />
+
+### Gestione Dipendenti 
+<img width="1608" height="613" alt="Screenshot 2026-01-28 alle 10 44 25" src="https://github.com/user-attachments/assets/d63f87d0-6086-48b3-89b9-3083d605456a" />
+
+### Incassi
+<img width="1200" height="1017" alt="Screenshot 2026-01-28 alle 10 46 25" src="https://github.com/user-attachments/assets/d9cf9d65-aa78-4693-8839-cef908b0aeaf" />
+
+
