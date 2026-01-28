@@ -1,36 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## I Miei Orari
 
-## Getting Started
+Applicazione web per **gestire gli orari di lavoro di un team**, pensata per piccole/medie realtà (negozi, bar, ristoranti, uffici) che hanno bisogno di:
 
-First, run the development server:
+- organizzare turni settimanali
+- monitorare ore lavorate, ferie, permessi, straordinari
+- avere una vista chiara per dipendente e per settimana/mese
+
+
+---
+
+## Funzionalità principali
+
+- **Autenticazione**:
+  - Registrazione, login, reset e aggiornamento password
+  - Gestione sessione con Supabase
+
+- **Dashboard orari**:
+  - Vista settimanale dei turni tramite componente `TeamSchedule`
+  - Supporto a diversi tipi di turno: lavorativo, permesso, ferie, malattia, straordinario
+  - Evidenziazione automatica di domeniche e festività italiane
+
+- **Gestione dipendenti**:
+  - Creazione e modifica dipendenti (nome, cognome, email, ruolo, ore settimanali)
+  - Calcolo ore lavorate e riepiloghi per anno/mese
+
+- **Incassi (sezione sperimentale)**:
+  - Tracciamento incassi e reportistica base
+
+- **Esportazione dati**:
+  - Esportazione in **Excel (.xlsx)** di orari e riepiloghi
+
+---
+
+## Stack tecnico
+
+- **Framework**: Next.js (App Router)
+- **Linguaggio**: TypeScript
+- **UI**:
+  - React + componenti UI personalizzati (`button`, `card`, `dialog`, ecc.)
+  - Tailwind CSS
+  - Icone `lucide-react`
+- **Backend-as-a-Service**: Supabase
+  - Autenticazione
+  - Database PostgreSQL
+- **Altre librerie**:
+  - `date-fns` (con locale italiana) per la gestione delle date
+  - `xlsx` per l’esportazione dei dati
+
+---
+
+## Come eseguirlo in locale
+
+### Prerequisiti
+
+- **Node.js** (versione consigliata LTS)
+- Un account **Supabase** con:
+  - URL del progetto
+  - chiave anon pubblica
+
+### Installazione
+
+```bash
+git clone https://github.com/<tu-utente-github>/i-miei-orari.git
+cd i-miei-orari
+npm install
+```
+
+Configura le variabili d’ambiente creando un file `.env.local` nella root del progetto, ad esempio:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
+
+### Avvio ambiente di sviluppo
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+L’applicazione sarà disponibile su `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Architettura del progetto
 
-## Learn More
+Struttura semplificata:
 
-To learn more about Next.js, take a look at the following resources:
+- `src/app`
+  - `(auth)/login`, `register`, `reset-password`, `update-password`
+  - `(dashboard)/dashboard`, `employees`, `incassi`, `profile`, `requests`
+  - `complete-registration`, `privacy`, `termini`
+- `src/components`
+  - `TeamSchedule`, `ShiftDialog`
+  - `incassi/IncassiChart`, `IncassiForm`, `IncassiTable`
+  - `auth/LoginForm`, `auth/AuthProvider`
+  - componenti UI riutilizzabili (`button`, `card`, `dialog`, ecc.)
+- `src/lib`
+  - `supabase`, `supabaseClient`, utilità varie
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
