@@ -61,7 +61,7 @@ Applicazione web per **gestire gli orari di lavoro di un team**, pensata per pic
 ### Installazione
 
 ```bash
-git clone https://github.com/<tu-utente-github>/i-miei-orari.git
+git clone https://github.com/geolep/i-miei-orari.git
 cd i-miei-orari
 npm install
 ```
