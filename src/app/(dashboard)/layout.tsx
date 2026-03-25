@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Navigation from '@/components/Navigation';
+import ChatWidget from '@/components/chat/ChatWidget';
 
 export default function DashboardLayout({
   children,
@@ -12,6 +13,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string>('');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -20,6 +22,17 @@ export default function DashboardLayout({
         
         if (error || !session) {
           router.push('/login');
+          return;
+        }
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) {
+          const { data } = await supabase
+            .from('employees')
+            .select('role')
+            .eq('email', user.email)
+            .single();
+          if (data?.role) setUserRole(data.role);
         }
       } catch (err) {
         console.error('Errore nel controllo dell\'autenticazione:', err);
@@ -66,6 +79,7 @@ export default function DashboardLayout({
           </div>
         </div>
       </footer>
+      {['admin', 'manager'].includes(userRole) && <ChatWidget />}
     </div>
   );
 } 

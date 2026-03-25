@@ -111,4 +111,5 @@ Struttura semplificata:
 ### Incassi
 <img width="1200" height="1017" alt="Screenshot 2026-01-28 alle 10 46 25" src="https://github.com/user-attachments/assets/d9cf9d65-aa78-4693-8839-cef908b0aeaf" />
 
+Licenza di rilascio: MIT
 

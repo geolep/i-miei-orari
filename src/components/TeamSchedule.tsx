@@ -9,7 +9,7 @@ import { Database } from '@/lib/database.types'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import ShiftDialog from './ShiftDialog'
-import { Stethoscope, Palmtree, Clock, LucideIcon, Zap, GripVertical, MoreVertical } from 'lucide-react'
+import { Stethoscope, Palmtree, Clock, LucideIcon, Zap, GripVertical, MoreVertical, RotateCcw } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog'
 import { Menu, Transition } from '@headlessui/react'
 
@@ -706,7 +706,8 @@ export default function TeamSchedule() {
                 ← Precedente
               </Button>
               <Button variant="secondary" size="sm" onClick={handleThisWeek} className="text-xs sm:text-sm touch-target">
-                Questa Settimana
+                <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                 Questa Settimana
               </Button>
               <Button variant="outline" size="sm" onClick={handleNextWeek} className="text-xs sm:text-sm touch-target">
                 Successiva →
@@ -926,7 +927,7 @@ export default function TeamSchedule() {
             {userRole !== 'employee' && (
               <div className="flex flex-col sm:flex-row gap-2 mobile-button-group">
                 <Button variant="destructive" size="sm" onClick={handleDeleteAllSchedule} className="w-full sm:w-auto touch-target">
-                  Elimina Tutti gli Orari
+                  Elimina Tutti gli Orari della Settimana
                 </Button>
                 <Button variant="secondary" size="sm" onClick={handleCopyPreviousWeek} className="w-full sm:w-auto touch-target">
                   Copia Orari Settimana Precedente
