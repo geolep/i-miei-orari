@@ -6,10 +6,19 @@ Applicazione web per **gestire gli orari di lavoro di un team**, pensata per pic
 - monitorare ore lavorate, ferie, permessi, straordinari
 - avere una vista chiara per dipendente e per settimana/mese
 
+Una delle novità centrali è l’**assistente conversazionale in italiano**: integrato nella dashboard per **amministratori e manager**, usa l’intelligenza artificiale collegata ai dati reali del team (turni, dipendenti, modelli di settimana) per rispondere a domande, consultare orari e supportare inserimenti o modifiche dei turni con conferma esplicita prima di applicare le modifiche.
 
 ---
 
 ## Funzionalità principali
+
+### Assistente AI (dashboard)
+
+- **Disponibilità**: widget di chat nella dashboard per utenti con ruolo **admin** o **manager** (gli altri ruoli non vedono l’assistente).
+- **Linguaggio e modello**: risposte in italiano tramite API **OpenAI** (modello configurato nell’endpoint chat); risposta in **streaming** (SSE) per un’esperienza simile a una chat moderna.
+- **Dati aggiornati**: l’assistente non “inventa” gli orari: usa **tool** lato server che interrogano Supabase (ricerca dipendenti, lettura turni, turni predefiniti, settimana tipo, statistiche, ecc.).
+- **Sicurezza operativa**: per **inserire o modificare turni** segue un flusso in due fasi — prima mostra un riepilogo e chiede conferma; solo dopo una conferma esplicita esegue le operazioni sul database.
+- **Cronologia**: conversazioni e messaggi salvati in Supabase (`chat_conversations`, `chat_messages`), con possibilità di riprendere le chat dal widget.
 
 - **Autenticazione**:
   - Registrazione, login, reset e aggiornamento password
@@ -42,10 +51,12 @@ Applicazione web per **gestire gli orari di lavoro di un team**, pensata per pic
   - Icone `lucide-react`
 - **Backend-as-a-Service**: Supabase
   - Autenticazione
-  - Database PostgreSQL
+  - Database PostgreSQL (incluso persistenza chat assistente)
+- **Assistente AI**: SDK `openai` (API route Next.js `/api/chat`, tool calling)
 - **Altre librerie**:
   - `date-fns` (con locale italiana) per la gestione delle date
   - `xlsx` per l’esportazione dei dati
+  - `react-markdown` / `remark-gfm` per la formattazione dei messaggi in chat
 
 ---
 
@@ -57,6 +68,7 @@ Applicazione web per **gestire gli orari di lavoro di un team**, pensata per pic
 - Un account **Supabase** con:
   - URL del progetto
   - chiave anon pubblica
+- Una **chiave API OpenAI** (`OPENAI_API_KEY`) se vuoi usare l’assistente AI in dashboard
 
 ### Installazione
 
@@ -71,7 +83,10 @@ Configura le variabili d’ambiente creando un file `.env.local` nella root del 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+OPENAI_API_KEY=...
 ```
+
+La chiave `OPENAI_API_KEY` è necessaria per l’assistente AI in dashboard; senza di essa la chat non può contattare il modello.
 
 ### Avvio ambiente di sviluppo
 
@@ -93,11 +108,14 @@ Struttura semplificata:
   - `complete-registration`, `privacy`, `termini`
 - `src/components`
   - `TeamSchedule`, `ShiftDialog`
+  - `chat/ChatWidget` — assistente AI (dashboard admin/manager)
   - `incassi/IncassiChart`, `IncassiForm`, `IncassiTable`
   - `auth/LoginForm`, `auth/AuthProvider`
   - componenti UI riutilizzabili (`button`, `card`, `dialog`, ecc.)
+- `src/app/api/chat`
+  - Route `POST`/`GET` per chat in streaming e gestione conversazioni
 - `src/lib`
-  - `supabase`, `supabaseClient`, utilità varie
+  - `supabase`, `supabaseClient`, `chat-tools` (tool per l’assistente), utilità varie
 
 ---
 ## Screenshots
