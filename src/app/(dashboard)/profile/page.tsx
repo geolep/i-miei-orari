@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Pencil, Trash2 } from 'lucide-react'
+import ShopSettings from '@/components/ShopSettings'
 
 interface Request {
   id: string
@@ -185,6 +186,13 @@ export default function ProfilePage() {
               <div className="font-medium">{employee.weekly_hours}h</div>
             </div>
           </div>
+        </div>
+      )}
+
+      {employee && (employee.role === 'admin' || employee.role === 'manager') && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-4">Impostazioni Negozio</h2>
+          <ShopSettings canEdit={true} />
         </div>
       )}
 

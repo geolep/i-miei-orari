@@ -198,6 +198,93 @@ export interface Database {
           created_at?: string | null
         }
       }
+      shop_schedule_periods: {
+        Row: {
+          id: string
+          name: string
+          valid_from: string
+          valid_to: string | null
+          notes: string | null
+          created_at: string | null
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          valid_from: string
+          valid_to?: string | null
+          notes?: string | null
+          created_at?: string | null
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          valid_from?: string
+          valid_to?: string | null
+          notes?: string | null
+          created_at?: string | null
+          created_by?: string | null
+        }
+      }
+      shop_schedule_hours: {
+        Row: {
+          id: string
+          period_id: string
+          weekday: number
+          is_closed: boolean
+          open_time_1: string | null
+          close_time_1: string | null
+          open_time_2: string | null
+          close_time_2: string | null
+        }
+        Insert: {
+          id?: string
+          period_id: string
+          weekday: number
+          is_closed?: boolean
+          open_time_1?: string | null
+          close_time_1?: string | null
+          open_time_2?: string | null
+          close_time_2?: string | null
+        }
+        Update: {
+          id?: string
+          period_id?: string
+          weekday?: number
+          is_closed?: boolean
+          open_time_1?: string | null
+          close_time_1?: string | null
+          open_time_2?: string | null
+          close_time_2?: string | null
+        }
+      }
+      shop_closures: {
+        Row: {
+          id: string
+          start_date: string
+          end_date: string
+          reason: string | null
+          created_at: string | null
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          start_date: string
+          end_date: string
+          reason?: string | null
+          created_at?: string | null
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          start_date?: string
+          end_date?: string
+          reason?: string | null
+          created_at?: string | null
+          created_by?: string | null
+        }
+      }
       chat_pending_shift_actions: {
         Row: {
           id: string
